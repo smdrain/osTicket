@@ -78,6 +78,20 @@ overdue_alert:
       - title: Manage SLAs
         href: /scp/slas.php
 
+sla_warn_alert:
+    title: SLA Warning Alert
+    content: >
+        Alert sent out to Agents when a ticket is approaching its SLA due date
+        but has not yet become overdue. Use the Warning Threshold to control
+        how early the alert is sent (e.g. 75% means the alert fires when 75%
+        of the SLA grace period has elapsed).
+    links:
+      - title: Default SLA Warning Alert Template
+        href: /scp/templates.php?default_for=ticket.sla.warn
+
+      - title: Manage SLAs
+        href: /scp/slas.php
+
 system_alerts:
     title: System Alerts
     content: >

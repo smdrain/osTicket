@@ -27,6 +27,7 @@ class Cron {
 
     static function TicketMonitor() {
         require_once(INCLUDE_DIR.'class.ticket.php');
+        Ticket::checkSLAWarnings(); //Send pre-breach SLA warnings
         Ticket::checkOverdue(); //Make stale tickets overdue
         // Cleanup any expired locks
         require_once(INCLUDE_DIR.'class.lock.php');
