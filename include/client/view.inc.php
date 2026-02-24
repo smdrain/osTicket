@@ -50,6 +50,34 @@ if ($thisclient && $thisclient->isGuest()
                 <a class="action-button" href="tickets.php?a=edit&id=<?php
                      echo $ticket->getId(); ?>"><i class="icon-edit"></i> <?php echo __('Edit'); ?></a>
 <?php } ?>
+<?php
+// Square Payments - show Pay button if plugin is active
+if (class_exists('SquarePaymentPlugin')
+        && ($__sq_cfg = SquarePaymentPlugin::getActiveConfig())
+        && $__sq_cfg->get('allow-client-pay')) { ?>
+                <a class="action-button" id="sq-pay-btn"
+                   href="#square-pay"
+                   ><i class="icon-credit-card"></i> <?php echo __('Pay'); ?></a>
+                <div id="sq-payment-dialog-container" style="display:none;" title="<?php echo __('Make a Payment'); ?>"></div>
+                <script type="text/javascript">
+                $(function() {
+                    $('#sq-pay-btn').on('click', function(e) {
+                        e.preventDefault();
+                        var $dlg = $('#sq-payment-dialog-container');
+                        $dlg.html('<p style="text-align:center;padding:20px;"><?php echo __('Loading...'); ?></p>');
+                        $dlg.dialog({
+                            modal: true,
+                            width: 520,
+                            autoOpen: true,
+                            close: function() { $dlg.html(''); }
+                        });
+                        $.get('ajax.php/square/payment-form/<?php echo $ticket->getId(); ?>', function(html) {
+                            $dlg.html(html);
+                        });
+                    });
+                });
+                </script>
+<?php } ?>
 </div>
             </h1>
         </td>
