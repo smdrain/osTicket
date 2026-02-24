@@ -6,7 +6,10 @@ $signin_url = ROOT_PATH . "login.php"
 $signout_url = ROOT_PATH . "logout.php?auth=".$ost->getLinkToken();
 
 header("Content-Type: text/html; charset=UTF-8");
-header("Content-Security-Policy: frame-ancestors ".$cfg->getAllowIframes()."; script-src 'self' 'unsafe-inline'; object-src 'none'");
+$__sq_csp_extra = '';
+if (class_exists('SquarePaymentPlugin') && SquarePaymentPlugin::getActiveConfig())
+    $__sq_csp_extra = ' https://sandbox.web.squarecdn.com https://web.squarecdn.com https://pci-connect.squareup.com https://pci-connect.squareupsandbox.com';
+header("Content-Security-Policy: frame-ancestors ".$cfg->getAllowIframes()."; script-src 'self' 'unsafe-inline'".$__sq_csp_extra."; frame-src 'self'".$__sq_csp_extra."; connect-src 'self'".$__sq_csp_extra." https://connect.squareup.com https://connect.squareupsandbox.com; object-src 'none'");
 
 if (($lang = Internationalization::getCurrentLanguage())) {
     $langs = array_unique(array($lang, $cfg->getPrimaryLanguage()));

@@ -268,6 +268,17 @@ if($ticket->isOverdue())
                      }
                   }
                   Signal::send('ticket.view.more', $ticket, $extras);
+                  // Square Payments - Process Payment option
+                  if (class_exists('SquarePaymentPlugin')
+                          && ($__sq_cfg = SquarePaymentPlugin::getActiveConfig())
+                          && $__sq_cfg->get('allow-staff-pay')) { ?>
+                        <li><a href="#ajax.php/square/payment-form/<?php echo $ticket->getId(); ?>"
+                            onclick="javascript:
+                            $.dialog($(this).attr('href').substr(1), 201);
+                            return false"
+                            ><i class="icon-credit-card"></i> <?php echo __('Process Payment'); ?></a></li>
+                  <?php
+                  }
                   if ($role->hasPerm(Ticket::PERM_DELETE)) {
                      ?>
                     <li class="danger"><a class="ticket-action" href="#tickets/<?php

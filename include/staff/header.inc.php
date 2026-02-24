@@ -1,6 +1,9 @@
 <?php
 header("Content-Type: text/html; charset=UTF-8");
-header("Content-Security-Policy: frame-ancestors ".$cfg->getAllowIframes()."; script-src 'self' 'unsafe-inline' 'unsafe-eval'; object-src 'none'");
+$__sq_csp_extra = '';
+if (class_exists('SquarePaymentPlugin') && SquarePaymentPlugin::getActiveConfig())
+    $__sq_csp_extra = ' https://sandbox.web.squarecdn.com https://web.squarecdn.com https://pci-connect.squareup.com https://pci-connect.squareupsandbox.com';
+header("Content-Security-Policy: frame-ancestors ".$cfg->getAllowIframes()."; script-src 'self' 'unsafe-inline' 'unsafe-eval'".$__sq_csp_extra."; frame-src 'self'".$__sq_csp_extra."; connect-src 'self'".$__sq_csp_extra." https://connect.squareup.com https://connect.squareupsandbox.com; object-src 'none'");
 
 $title = ($ost && ($title=$ost->getPageTitle()))
     ? $title : ('osTicket :: '.__('Staff Control Panel'));
