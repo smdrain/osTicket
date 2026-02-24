@@ -565,9 +565,20 @@ implements RestrictedAccess, Threadable, Searchable {
         if ($this->isOverdue() && $clearOverdue)
             $this->clearOverdue(false);
 
+        // Clear SLA warning so it can be re-evaluated with the new due date
+        $this->clearSLAWarning();
+
         $this->est_duedate = $this->getSLADueDate(true) ?: null;
 
         return $this->save();
+    }
+
+    function clearSLAWarning() {
+        $prefix = TABLE_PREFIX ?: 'ost_';
+        db_query(sprintf(
+            "DELETE FROM `%ssla_warning_sent` WHERE `ticket_id` = %d",
+            $prefix, $this->getId()
+        ));
     }
 
     function getEstDueDate() {
@@ -4743,6 +4754,150 @@ implements RestrictedAccess, Threadable, Searchable {
         foreach ($overdue as $ticket)
             $ticket->markOverdue();
 
+    }
+
+    /**
+     * Check open tickets approaching their SLA due date and send
+     * warning alerts before the ticket becomes overdue.
+     */
+    static function checkSLAWarnings() {
+        global $cfg;
+
+        if (!$cfg || !$cfg->alertONSLAWarning())
+            return;
+
+        $threshold = $cfg->getSLAWarningThreshold() ?: 75;
+        $prefix = TABLE_PREFIX ?: 'ost_';
+
+        // Ensure the tracking table exists
+        db_query("CREATE TABLE IF NOT EXISTS `{$prefix}sla_warning_sent` (
+            `ticket_id` int(11) unsigned NOT NULL,
+            `sent` datetime NOT NULL,
+            PRIMARY KEY (`ticket_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+
+        // Find open tickets with an SLA due date that are NOT yet overdue
+        // and have NOT already received a warning, where enough of the
+        // grace period has elapsed to trigger the warning threshold.
+        //
+        // The threshold is calculated as:
+        //   NOW() >= create_date + (grace_period_hours * threshold/100)
+        // Which means the warning fires when X% of the grace period has passed.
+        $sql = "SELECT t.ticket_id, t.est_duedate, t.duedate,
+                       t.created, t.reopened, s.grace_period
+                FROM `{$prefix}ticket` t
+                JOIN `{$prefix}ticket_status` ts ON (ts.id = t.status_id)
+                LEFT JOIN `{$prefix}sla` s ON (s.id = t.sla_id)
+                LEFT JOIN `{$prefix}sla_warning_sent` sw ON (sw.ticket_id = t.ticket_id)
+                WHERE ts.state = 'open'
+                  AND t.isoverdue = 0
+                  AND sw.ticket_id IS NULL
+                  AND (
+                      (t.duedate IS NULL AND t.est_duedate IS NOT NULL
+                       AND t.est_duedate > NOW())
+                      OR
+                      (t.duedate IS NOT NULL AND t.duedate > NOW())
+                  )
+                  AND s.grace_period IS NOT NULL
+                  AND s.grace_period > 0
+                  AND NOW() >= DATE_ADD(
+                      COALESCE(t.reopened, t.created),
+                      INTERVAL (s.grace_period * " . ((int) $threshold) . " / 100) HOUR
+                  )
+                LIMIT 50";
+
+        $res = db_query($sql);
+        if (!$res)
+            return;
+
+        while ($row = db_fetch_array($res)) {
+            $ticket = Ticket::lookup($row['ticket_id']);
+            if ($ticket)
+                $ticket->onSLAWarning();
+        }
+    }
+
+    /**
+     * Send SLA warning alert to assigned staff and department manager.
+     */
+    function onSLAWarning() {
+        global $cfg;
+
+        if (!$cfg->alertONSLAWarning())
+            return true;
+
+        // Check SLA-level alert suppression
+        if (($sla = $this->getSLA()) && !$sla->sendAlerts())
+            return true;
+
+        $dept = $this->getDept();
+        if (!$dept)
+            return true;
+
+        // Mark warning as sent (do this first to prevent duplicates)
+        $prefix = TABLE_PREFIX ?: 'ost_';
+        db_query(sprintf(
+            "INSERT IGNORE INTO `%ssla_warning_sent` (`ticket_id`, `sent`) VALUES (%d, NOW())",
+            $prefix, $this->getId()
+        ));
+
+        // Get the message template
+        if (!($tpl = $dept->getTemplate())
+            || !($msg = $tpl->getSLAWarningAlertMsgTemplate())
+            || !($email = $dept->getAlertEmail())
+        ) {
+            return true;
+        }
+
+        $msg = $this->replaceVars($msg->asArray(),
+            array('comments' => '')
+        );
+
+        // Build recipients list
+        $recipients = array();
+
+        // Assigned staff or team
+        if ($this->isAssigned() && $cfg->alertAssignedONSLAWarning()) {
+            if ($this->getStaffId()) {
+                $recipients[] = $this->getStaff();
+            } elseif ($this->getTeamId()
+                && ($team = $this->getTeam())
+                && ($members = $team->getMembersForAlerts())
+            ) {
+                $recipients = array_merge($recipients, $members);
+            }
+        }
+        // Department members if ticket is unassigned
+        elseif ($cfg->alertDeptMembersONSLAWarning() && !$this->isAssigned()) {
+            foreach ($dept->getMembersForAlerts() as $M)
+                $recipients[] = $M;
+        }
+
+        // Always include dept manager if enabled
+        if ($cfg->alertDeptManagerONSLAWarning()
+            && $dept && ($manager = $dept->getManager())
+        ) {
+            $recipients[] = $manager;
+        }
+
+        // Send alerts
+        $sentlist = array();
+        foreach ($recipients as $k => $staff) {
+            if (!is_object($staff)
+                || !$staff->isAvailable()
+                || in_array($staff->getEmail(), $sentlist)
+            ) {
+                continue;
+            }
+            $alert = $this->replaceVars($msg, array('recipient' => $staff));
+            $email->sendAlert($staff, $alert['subj'], $alert['body'], null);
+            $sentlist[] = $staff->getEmail();
+        }
+
+        // Log the event
+        $this->logEvent('sla_warning');
+
+        return true;
     }
 
     static function agentActions($agent, $options=array()) {

@@ -198,6 +198,46 @@
                 echo $config['overdue_alert_dept_members']?'checked':''; ?>> <?php echo __('Department Members'); ?>
             </td>
         </tr>
+        <tr><th><em><b><?php echo __('SLA Warning Alert'); ?></b>:
+            <i class="help-tip icon-question-sign" href="#sla_warn_alert"></i>
+            </em></th></tr>
+        <tr>
+            <td><em><b><?php echo __('Status'); ?>:</b></em> &nbsp;
+              <input type="radio" name="sla_warn_alert_active"  value="1"
+                <?php echo $config['sla_warn_alert_active']?'checked':''; ?> /> <?php echo __('Enable'); ?>
+              <input type="radio" name="sla_warn_alert_active"  value="0"
+                <?php echo !$config['sla_warn_alert_active']?'checked':''; ?> /> <?php echo __('Disable'); ?>
+              &nbsp;&nbsp;<font class="error"><?php echo $errors['sla_warn_alert_active']; ?></font>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <em><b><?php echo __('Warning Threshold'); ?>:</b></em> &nbsp;
+                <input type="number" name="sla_warn_threshold" size="4" min="1" max="99"
+                    value="<?php echo $config['sla_warn_threshold'] ?: 75; ?>"
+                    style="width: 60px;" />%
+                <?php echo __('of SLA grace period elapsed'); ?>
+                &nbsp;&nbsp;<font class="error"><?php echo $errors['sla_warn_threshold']; ?></font>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <input type="checkbox" name="sla_warn_alert_assigned" <?php
+                echo $config['sla_warn_alert_assigned']?'checked':''; ?>> <?php echo __('Assigned Agent / Team'); ?>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <input type="checkbox" name="sla_warn_alert_dept_manager" <?php
+                echo $config['sla_warn_alert_dept_manager']?'checked':''; ?>> <?php echo __('Department Manager'); ?>
+            </td>
+        </tr>
+        <tr>
+            <td>
+              <input type="checkbox" name="sla_warn_alert_dept_members" <?php
+                echo $config['sla_warn_alert_dept_members']?'checked':''; ?>> <?php echo __('Department Members'); ?>
+            </td>
+        </tr>
         <tr><th>
             <em><b><?php echo __('System Alerts'); ?></b>: <i class="help-tip icon-question-sign" href="#system_alerts"></i></em></th></tr>
         <tr>

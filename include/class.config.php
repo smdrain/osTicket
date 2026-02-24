@@ -1061,6 +1061,27 @@ class OsticketConfig extends Config {
         return ($this->get('overdue_alert_dept_members'));
     }
 
+    /* SLA Warning Alerts */
+    function alertONSLAWarning() {
+        return ($this->get('sla_warn_alert_active'));
+    }
+
+    function getSLAWarningThreshold() {
+        return $this->get('sla_warn_threshold') ?: 75;
+    }
+
+    function alertAssignedONSLAWarning() {
+        return ($this->get('sla_warn_alert_assigned'));
+    }
+
+    function alertDeptManagerONSLAWarning() {
+        return ($this->get('sla_warn_alert_dept_manager'));
+    }
+
+    function alertDeptMembersONSLAWarning() {
+        return ($this->get('sla_warn_alert_dept_members'));
+    }
+
     function autoClaimTickets() {
         return $this->get('auto_claim_tickets');
     }
@@ -1748,6 +1769,21 @@ class OsticketConfig extends Config {
             $errors['overdue_alert_active']=__('Select recipient(s)');
         }
 
+        if($vars['sla_warn_alert_active']
+                && (!isset($vars['sla_warn_alert_assigned'])
+                    && !isset($vars['sla_warn_alert_dept_manager'])
+                    && !isset($vars['sla_warn_alert_dept_members']))) {
+            $errors['sla_warn_alert_active']=__('Select recipient(s)');
+        }
+
+        if($vars['sla_warn_alert_active']
+                && isset($vars['sla_warn_threshold'])
+                && (!is_numeric($vars['sla_warn_threshold'])
+                    || $vars['sla_warn_threshold'] < 1
+                    || $vars['sla_warn_threshold'] > 99)) {
+            $errors['sla_warn_threshold']=__('Threshold must be between 1 and 99 percent');
+        }
+
         if($vars['assigned_alert_active']
                 && (!isset($vars['assigned_alert_staff'])
                     && !isset($vars['assigned_alert_team_lead'])
@@ -1784,6 +1820,11 @@ class OsticketConfig extends Config {
             'overdue_alert_assigned'=>isset($vars['overdue_alert_assigned'])?1:0,
             'overdue_alert_dept_manager'=>isset($vars['overdue_alert_dept_manager'])?1:0,
             'overdue_alert_dept_members'=>isset($vars['overdue_alert_dept_members'])?1:0,
+            'sla_warn_alert_active'=>$vars['sla_warn_alert_active'],
+            'sla_warn_threshold'=>$vars['sla_warn_threshold'] ?: 75,
+            'sla_warn_alert_assigned'=>isset($vars['sla_warn_alert_assigned'])?1:0,
+            'sla_warn_alert_dept_manager'=>isset($vars['sla_warn_alert_dept_manager'])?1:0,
+            'sla_warn_alert_dept_members'=>isset($vars['sla_warn_alert_dept_members'])?1:0,
             'send_sys_errors'=>isset($vars['send_sys_errors'])?1:0,
             'send_sql_errors'=>isset($vars['send_sql_errors'])?1:0,
             'send_login_errors'=>isset($vars['send_login_errors'])?1:0,

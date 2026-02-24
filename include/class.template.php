@@ -132,6 +132,14 @@ class EmailTemplateGroup {
                 'ticket', 'recipient', 'comments',
             ),
         ),
+        'ticket.sla.warn'=>array(
+            'group'=>'b.ticket.staff',
+            'name'=>/* @trans */ 'SLA Warning Alert',
+            'desc'=>/* @trans */ 'Alert sent to agents when a ticket is approaching its SLA due date.',
+            'context' => array(
+                'ticket', 'recipient', 'comments',
+            ),
+        ),
         'task.alert' => array(
             'group'=>'c.task',
             'name'=>/* @trans */ 'New Task Alert',
@@ -347,6 +355,10 @@ class EmailTemplateGroup {
 
     function getOverdueAlertMsgTemplate() {
         return $this->getMsgTemplate('ticket.overdue');
+    }
+
+    function getSLAWarningAlertMsgTemplate() {
+        return $this->getMsgTemplate('ticket.sla.warn');
     }
 
     /* Tasks templates */
