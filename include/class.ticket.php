@@ -2226,6 +2226,20 @@ implements RestrictedAccess, Threadable, Searchable {
             return new FormattedDate($this->lastupdate);
         case 'user':
             return $this->getOwner();
+        case 'queue_position':
+            include_once(INCLUDE_DIR.'class.workload.php');
+            if ($this->isOpen()) {
+                $est = WorkloadEstimator::getEstimate($this);
+                return $est ? $est['position'] : '';
+            }
+            return '';
+        case 'est_wait':
+            include_once(INCLUDE_DIR.'class.workload.php');
+            if ($this->isOpen()) {
+                $est = WorkloadEstimator::getEstimate($this);
+                return $est ? $est['est_start_display'] : '';
+            }
+            return '';
         default:
             if ($a = $this->getAnswer($tag))
                 // The answer object is retrieved here which will
@@ -2287,6 +2301,8 @@ implements RestrictedAccess, Threadable, Searchable {
             'user' => array(
                 'class' => 'User', 'desc' => __('Ticket Owner'),
             ),
+            'queue_position' => __('Position in queue (open tickets only)'),
+            'est_wait' => __('Estimated wait time (open tickets only)'),
         );
 
         $extra = VariableReplacer::compileFormScope(TicketForm::getInstance());
