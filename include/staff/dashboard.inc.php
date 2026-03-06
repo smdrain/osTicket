@@ -38,6 +38,41 @@ $plots = $report->getPlotData();
     </div>
 </div>
 <div class="clear"></div>
+
+<!-- Workload Estimator -->
+<?php
+include_once(INCLUDE_DIR.'class.workload.php');
+$__wl_summaries = WorkloadEstimator::getAllDeptSummaries();
+if ($__wl_summaries) { ?>
+<div style="margin-bottom:20px; padding-top:5px;">
+    <h2><?php echo __('Queue Workload'); ?></h2>
+    <p><?php echo __('Current queue depth and estimated wait times by department.'); ?></p>
+    <table class="dashboard-stats table">
+    <thead><tr>
+        <th width="25%" class="flush-left"><?php echo __('Department'); ?></th>
+        <th><?php echo __('Open Tickets'); ?></th>
+        <th><?php echo __('Agents'); ?></th>
+        <th><?php echo __('Per Agent'); ?></th>
+        <th><?php echo __('Avg Service (hrs)'); ?></th>
+        <th><?php echo __('Est. Wait for New Ticket'); ?></th>
+    </tr></thead>
+    <tbody>
+<?php foreach ($__wl_summaries as $__wl) { ?>
+    <tr>
+        <th class="flush-left"><?php echo Format::htmlchars($__wl['dept_name']); ?></th>
+        <td><?php echo $__wl['open_tickets']; ?></td>
+        <td><?php echo $__wl['agents']; ?></td>
+        <td><?php echo $__wl['tickets_per_agent']; ?></td>
+        <td><?php echo $__wl['avg_service_hours']; ?></td>
+        <td><?php echo Format::htmlchars($__wl['est_wait_display']); ?></td>
+    </tr>
+<?php } ?>
+    </tbody>
+    </table>
+</div>
+<hr/>
+<?php } ?>
+
 <div style="margin-bottom:20px; padding-top:5px;">
     <div class="pull-left flush-left">
         <h2><?php echo __('Ticket Activity');

@@ -102,6 +102,23 @@ if (class_exists('SquarePaymentPlugin')
                     <th><?php echo __('Create Date');?>:</th>
                     <td><?php echo Format::datetime($ticket->getCreateDate()); ?></td>
                 </tr>
+<?php
+// Queue position & estimated wait time for open tickets
+if ($ticket->isOpen()) {
+    include_once(INCLUDE_DIR.'class.workload.php');
+    $__est = WorkloadEstimator::getEstimate($ticket);
+    if ($__est) { ?>
+                <tr>
+                    <th><?php echo __('Queue Position');?>:</th>
+                    <td><strong>#<?php echo $__est['position']; ?></strong>
+                        <?php echo sprintf(__('(%d tickets ahead)'), $__est['tickets_ahead']); ?></td>
+                </tr>
+                <tr>
+                    <th><?php echo __('Est. Wait');?>:</th>
+                    <td><?php echo Format::htmlchars($__est['est_start_display']); ?></td>
+                </tr>
+<?php }
+} ?>
            </table>
        </td>
        <td width="50%">
